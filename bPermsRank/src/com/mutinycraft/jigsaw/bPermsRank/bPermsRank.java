@@ -20,7 +20,7 @@ public class bPermsRank extends JavaPlugin {
 	private boolean broadcast;
 	private boolean notifyRanked;
 	private boolean notifySender;
-	private static final String VERSION = " v1.4";
+	private static final String VERSION = " v1.5";
 	private bPermsRankCommandExecutor cmdExecutor;
 
 	public void onEnable() {
