@@ -1,0 +1,20 @@
+name: bPermsRank
+main: com.mutinycraft.jigsaw.bPermsRank.bPermsRank
+version: 1.4
+author: Jigsaw
+description: Simple plugin for changing the group of a player and notifying the player and server of the group change.
+website: http://dev.bukkit.org/server-mods/bpermsrank/
+
+commands:
+   rank:
+      description: Changes the group of the given player.
+      usage: /rank (player) (rank/group) [world]
+   rankoffline:
+      description: Changes the group of the given player regardless of their online status.
+      usage: /rank (player) (rank/group) [world]
+   rankinfo:
+      description: Returns the group/s of a player in the provided world.
+      usage: /rankinfo (player) (world)
+   bpermsrank:
+      description: Displays help or reloads plugin
+      usage: /bpermsrank [reload]
