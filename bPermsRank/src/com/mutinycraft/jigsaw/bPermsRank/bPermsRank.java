@@ -12,11 +12,13 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class bPermsRank extends JavaPlugin {
+	
 	Logger log;
 	File configFile;
 	FileConfiguration config;
-	public List<String> groups;
-	public List<String> worlds;
+	
+	private List<String> groups;
+	private List<String> worlds;
 	private boolean broadcast;
 	private boolean notifyRanked;
 	private boolean notifySender;
@@ -24,53 +26,41 @@ public class bPermsRank extends JavaPlugin {
 	private bPermsRankCommandExecutor cmdExecutor;
 
 	public void onEnable() {
-		this.log = getLogger();
-		this.configFile = new File(getDataFolder(), "config.yml");
+		log = getLogger();
+		configFile = new File(getDataFolder(), "config.yml");
 		try {
 			firstRun();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		this.config = new YamlConfiguration();
+		config = new YamlConfiguration();
 		loadYamls();
 		setConfigOptions();
 		loadCommands();
-		this.log.info("There were " + this.groups.size()
-				+ " groups loaded from the config.yml");
-		this.log.info(getName() + " v1.4" + " enabled!");
+		log.info("There were " + groups.size() + " groups loaded from the config.yml");
+		log.info("There were " + worlds.size() + " worlds loaded from the config.yml");
+		log.info(getName() + VERSION + " enabled!");
 	}
 
 	private void loadCommands() {
-		this.cmdExecutor = new bPermsRankCommandExecutor(this);
-		getCommand("bpermsrank").setExecutor(this.cmdExecutor);
-		getCommand("rank").setExecutor(this.cmdExecutor);
-		getCommand("rankoffline").setExecutor(this.cmdExecutor);
-		getCommand("rankinfo").setExecutor(this.cmdExecutor);
+		cmdExecutor = new bPermsRankCommandExecutor(this);
+		getCommand("bpermsrank").setExecutor(cmdExecutor);
+		getCommand("rank").setExecutor(cmdExecutor);
+		getCommand("rankoffline").setExecutor(cmdExecutor);
+		getCommand("rankinfo").setExecutor(cmdExecutor);
 	}
 
 	private void setConfigOptions() {
-		this.groups = this.config.getStringList("groups");
-		this.worlds = this.config.getStringList("worlds");
-		this.broadcast = this.config.getBoolean("broadcast", true);
-		this.notifyRanked = this.config.getBoolean("notifyranked", true);
-		this.notifySender = this.config.getBoolean("notifysender", true);
-	}
-
-	public boolean hasBroadcast() {
-		return this.broadcast;
-	}
-
-	public boolean hasNotifyRanked() {
-		return this.notifyRanked;
-	}
-
-	public boolean hasNotifySender() {
-		return this.notifySender;
+		groups = config.getStringList("groups");
+		worlds = config.getStringList("worlds");
+		broadcast = config.getBoolean("broadcast", true);
+		notifyRanked = config.getBoolean("notifyranked", true);
+		notifySender = config.getBoolean("notifysender", true);
 	}
 
 	public void saveYamls() {
 		try {
-			this.config.save(this.configFile);
+			config.save(configFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -78,16 +68,16 @@ public class bPermsRank extends JavaPlugin {
 
 	public void loadYamls() {
 		try {
-			this.config.load(this.configFile);
+			config.load(configFile);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	private void firstRun() throws Exception {
-		if (!this.configFile.exists()) {
-			this.configFile.getParentFile().mkdirs();
-			copy(getResource("config.yml"), this.configFile);
+		if (!configFile.exists()) {
+			configFile.getParentFile().mkdirs();
+			copy(getResource("config.yml"), configFile);
 		}
 	}
 
@@ -105,6 +95,26 @@ public class bPermsRank extends JavaPlugin {
 			e.printStackTrace();
 		}
 	}
+	
+	public boolean isBroadcast() {
+		return broadcast;
+	}
+
+	public boolean isNotifyRanked() {
+		return notifyRanked;
+	}
+
+	public boolean isNotifySender() {
+		return notifySender;
+	}
+	
+	public List<String> getGroups(){
+		return groups;
+	}
+	
+	public List<String> getWorlds(){
+		return worlds;
+	}
 
 	@Override
 	public void reloadConfig() {
@@ -114,6 +124,6 @@ public class bPermsRank extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
-		this.log.info(getName() + VERSION + " disabled!");
+		log.info(getName() + VERSION + " disabled!");
 	}
 }

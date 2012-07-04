@@ -9,347 +9,225 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class bPermsRankCommandExecutor implements CommandExecutor {
+public class bPermsRankCommandExecutor implements CommandExecutor{
+	
 	private bPermsRank plugin;
-	private String[] data;
+	private Player playerSender;
 	private Player playerToRank;
-	private Player player;
-
-	public bPermsRankCommandExecutor(bPermsRank plugin) {
-		this.plugin = plugin;
+	private CommandSender cmdSender;
+	private String[] data;
+	
+	public bPermsRankCommandExecutor(bPermsRank pl){
+		this.plugin = pl;
+		this.playerSender = null;
+		this.playerToRank = null;
+		this.data = null;
 	}
 
-	public boolean onCommand(CommandSender sender, Command cmd, String label,
-			String[] args) {
-		this.player = null;
-		this.data = args;
-		if ((sender instanceof Player)) {
-			this.player = ((Player) sender);
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		playerSender = null;
+		cmdSender = sender;
+		data = args;
+		if((sender instanceof Player)){
+			playerSender = (Player) sender;	
+			try{
+				if(!playerSender.hasPermission("bpermsrank.rank")){
+					throw new CommandException("You may not use this command!");
+				}
+			}
+			catch(CommandException e){
+				cmdSender.sendMessage(ChatColor.RED + e.getMessage());
+				return true;
+			}
 		}
-		if (cmd.getName().equalsIgnoreCase("bpermsrank")) {
-			return commandbPermsRank(sender);
+		if(cmd.getName().equalsIgnoreCase("bpermsrank")){
+			return commandbPermsRank();
 		}
-		if (cmd.getName().equalsIgnoreCase("rank")) {
-			return commandRank(sender);
+		if(cmd.getName().equalsIgnoreCase("rank")){
+			return commandRank();
 		}
-		if (cmd.getName().equalsIgnoreCase("rankoffline")) {
-			return commandRankOffline(sender);
+		if(cmd.getName().equalsIgnoreCase("rankoffline")){
+			return commandRankOffline();
 		}
-		if (cmd.getName().equalsIgnoreCase("rankinfo")) {
-			return commandRankInfo(sender);
+		if(cmd.getName().equalsIgnoreCase("rankinfo")){
+			return commandRankInfo();
 		}
 		return false;
 	}
 
-	private boolean commandbPermsRank(CommandSender sender) {
-		if ((this.data.length == 1)
-				&& (this.data[0].equalsIgnoreCase("reload"))) {
-			if (this.player == null) {
-				this.plugin.reloadConfig();
-				this.plugin.log.info("bPermsRank config.yml reloaded");
-			} else if (this.player.hasPermission("bpermsrank.reload")) {
-				this.plugin.reloadConfig();
-				this.player.sendMessage(ChatColor.RED
-						+ "bPermsRank config.yml reloaded");
-			} else {
-				displayHelp(sender);
-			}
-			return true;
+	private boolean commandbPermsRank(){
+		if(data.length > 0 && (playerSender == null || playerSender.hasPermission("bpermsrank.reload"))){
+			plugin.reloadConfig();
+			cmdSender.sendMessage(ChatColor.RED + "bPermsRank config.yml reloaded!");
 		}
-
-		displayHelp(sender);
-		return true;
-	}
-
-	private boolean commandRank(CommandSender sender) {
-		if ((this.data.length != 2) && (this.data.length != 3)) {
-			sender.sendMessage(ChatColor.RED + "Usage: /rank name rank [world]");
-			return true;
-		}
-
-		if (this.player == null)
-			try {
-				isValidGroup(this.data[1].toLowerCase());
-				this.playerToRank = this.plugin.getServer().getPlayerExact(
-						this.data[0]);
-				isValidPlayer(this.playerToRank);
-				if (this.data.length == 2) {
-					rankPlayerAllWorlds(this.playerToRank.getName(),
-							this.data[1].toLowerCase());
-					broadcast(sender, this.playerToRank, this.data, 0);
-				} else {
-					isValidWorld(this.data[2].toLowerCase());
-					rankPlayerInSingleWorld(this.playerToRank.getName(),
-							this.data[1].toLowerCase(),
-							this.data[2].toLowerCase());
-					broadcast(sender, this.playerToRank, this.data, 1);
-				}
-			} catch (CommandException e) {
-				sender.sendMessage(ChatColor.RED + e.getMessage());
-			}
-		else {
-			try {
-				hasPermissionForPlugin(this.player);
-				isValidGroup(this.data[1].toLowerCase());
-				this.playerToRank = this.plugin.getServer().getPlayerExact(
-						this.data[0]);
-				isValidPlayer(this.playerToRank);
-				hasPermissionForGroup(this.player, this.data[1].toLowerCase());
-				if (this.data.length == 2) {
-					rankPlayerAllWorlds(this.playerToRank.getName(),
-							this.data[1].toLowerCase());
-					broadcast(this.player, this.playerToRank, this.data, 0);
-				} else {
-					isValidWorld(this.data[2].toLowerCase());
-					rankPlayerInSingleWorld(this.playerToRank.getName(),
-							this.data[1].toLowerCase(),
-							this.data[2].toLowerCase());
-					broadcast(this.player, this.playerToRank, this.data, 1);
-				}
-			} catch (CommandException e) {
-				sender.sendMessage(ChatColor.RED + e.getMessage());
-			}
+		else{
+			displayHelp();
 		}
 		return true;
 	}
 
-	private boolean commandRankOffline(CommandSender sender) {
-		if ((this.data.length != 2) && (this.data.length != 3)) {
-			sender.sendMessage(ChatColor.RED
-					+ "Usage: /rankoffline name rank [world]");
+	private boolean commandRank() {
+		if((data.length != 2) && (data.length != 3)){
+			cmdSender.sendMessage(ChatColor.RED + "Usage: /rank name rank [world]");
 			return true;
 		}
-		if (this.player == null)
-			try {
-				isValidGroup(this.data[1].toLowerCase());
-				if (this.data.length == 2) {
-					rankPlayerAllWorlds(this.data[0], this.data[1]);
-					broadcastOffline(0, sender);
-				}
-				else{
-					isValidWorld(this.data[2].toLowerCase());
-					rankPlayerInSingleWorld(this.data[0],
-							this.data[1].toLowerCase(), this.data[2].toLowerCase());
-					broadcastOffline(1, sender);
-				}
-			} catch (CommandException e) {
-				sender.sendMessage(ChatColor.RED + e.getMessage());
-			}
-		else {
-			try {
-				hasPermissionForPlugin(this.player);
-				if (!this.player.hasPermission("bpermsrank.rankoffline")) {
-					throw new CommandException(
-							"You may not rank offline players!");
-				}
-				isValidGroup(this.data[1].toLowerCase());
-				hasPermissionForGroup(this.player, this.data[1].toLowerCase());
-				if (this.data.length == 2) {
-					rankPlayerAllWorlds(this.data[0], this.data[1]);
-					broadcastOffline(0, sender);
-				} else {
-					isValidWorld(this.data[2].toLowerCase());
-					rankPlayerInSingleWorld(this.data[0],
-							this.data[1].toLowerCase(),
-							this.data[2].toLowerCase());
-					broadcastOffline(1, sender);
-				}
-			} catch (CommandException e) {
-				sender.sendMessage(ChatColor.RED + e.getMessage());
-			}
-		}
-		return true;
-	}
-
-	private boolean commandRankInfo(CommandSender sender) {
-		try {
-			if ((this.player != null)
-					&& (!this.player.hasPermission("bpermsrank.rankinfo"))) {
+		try{
+			if(playerSender != null && !playerSender.hasPermission("bpermsrank.rank")){
 				throw new CommandException("You may not use this command!");
 			}
-
-			if (this.data.length != 2) {
-				throw new CommandException("Usage: /rankinfo name world");
+			isValidGroup();
+			playerToRank = plugin.getServer().getPlayerExact(data[0]);
+			isValidPlayer();
+			if(playerSender != null){
+				hasPermissionForGroup();
 			}
-			String playerName = this.data[0];
-			String worldName = this.data[1];
-			isValidWorld(worldName);
-			String groups = getPlayerGroups(worldName, playerName);
-			sender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ playerName + ChatColor.RED + " has the group(s): [ "
-					+ groups + "] in world: " + worldName);
-		} catch (CommandException e) {
-			sender.sendMessage(ChatColor.RED + e.getMessage());
+			if(data.length == 2){
+				rankPlayerAllWorlds();
+				broadcast(true, true);
+			}
+			else{
+				isValidWorld(data[2]);
+				rankPlayerInSingleWorld();
+				broadcast(false, true);
+			}
+		} 
+		catch(CommandException e){
+			cmdSender.sendMessage(ChatColor.RED + e.getMessage());
 		}
 		return true;
 	}
-
-	private void broadcastOffline(int ident, CommandSender sender) {
-		if (ident == 0) {
-			sender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "You have changed the rank of offline player  "
-					+ this.data[0] + " to " + this.data[1]);
-		} else
-			sender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "You have changed the rank of offline player "
-					+ this.data[0] + " to " + this.data[1] + " in the world: "
-					+ getWorldName());
+	
+	private boolean commandRankOffline() {
+		if((data.length != 2) && (data.length != 3)){
+			cmdSender.sendMessage(ChatColor.RED + "Usage: /rankoffline name rank [world]");
+			return true;
+		}
+		try{
+			if(playerSender != null && !playerSender.hasPermission("bpermsrank.rankoffline")){
+				throw new CommandException("You may not rank offline players!");
+			}
+			isValidGroup();
+			if(playerSender != null){
+				hasPermissionForGroup();
+			}
+			if(data.length == 2){
+				rankPlayerAllWorlds();
+				broadcast(true, false);
+			}
+			else{
+				isValidWorld(data[2]);
+				rankPlayerInSingleWorld();
+				broadcast(false, false);
+			}
+		} 
+		catch(CommandException e){
+			cmdSender.sendMessage(ChatColor.RED + e.getMessage());
+		}
+		return true;
+	}
+	
+	private boolean commandRankInfo() {
+		try{
+			if(playerSender != null){
+				if(!playerSender.hasPermission("bpermsrank.rankinfo")){
+					throw new CommandException("You may not use this command!");
+				}
+			}
+			if(data.length != 2){
+				throw new CommandException("Usage: /rankinfo name world");
+			}
+			isValidWorld(data[1]);
+			String groups = getPlayerGroups(data[1], data[0]);
+			cmdSender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + data[0] + ChatColor.RED +  " has the group(s): [ " + groups + "] in world: " + data[1]);
+		} 
+		catch(CommandException e){
+			cmdSender.sendMessage(ChatColor.RED + e.getMessage());
+		}
+		return true;
+	}
+	
+	private void rankPlayerAllWorlds() {
+		String playerToRankName = data[0];
+		for(int i = 0; i < plugin.getWorlds().size(); i++){
+			String worldName = (String) plugin.getWorlds().get(i);
+			ApiLayer.setGroup(worldName, CalculableType.USER, playerToRankName, data[1]);
+		}
+	}
+	
+	private void rankPlayerInSingleWorld(){
+		String playerToRankName = data[0];
+		ApiLayer.setGroup(data[2], CalculableType.USER, playerToRankName, data[1]);
 	}
 
-	private void broadcast(CommandSender sender, Player playerToRank,
-			String[] args, int ident) {
-		if ((ident == 0) && (this.plugin.hasBroadcast())) {
-			this.plugin.getServer().broadcastMessage(
-					getMessage("broadcastMessage"));
-		} else if (this.plugin.hasBroadcast()) {
-			this.plugin.getServer().broadcastMessage(
-					getMessageWorld("broadcastMessage"));
+	public void isValidPlayer() throws CommandException{
+		if((playerToRank == null) || (!playerToRank.isOnline())){
+			throw new CommandException("That player is not online! Use: /rankoffline if you are sure you want to rank this player.");
 		}
-
-		if ((ident == 0) && (this.plugin.hasNotifySender())) {
-			sender.sendMessage(getMessage("senderMessage"));
-		} else if (this.plugin.hasNotifySender()) {
-			sender.sendMessage(getMessageWorld("senderMessage"));
-		}
-
-		if ((ident == 0) && (this.plugin.hasNotifyRanked())) {
-			playerToRank.sendMessage(getMessage("rankedMessage"));
-		} else if (this.plugin.hasNotifyRanked())
-			playerToRank.sendMessage(getMessageWorld("rankedMessage"));
 	}
-
-	public String getCustomMessage(String msgName) {
-		String msg = getMessage(msgName);
-		return msg;
+	
+	public void isValidGroup() throws CommandException{
+		if (plugin.getGroups().indexOf(data[1].toLowerCase()) == -1){
+			throw new CommandException("That group/rank does not exist!");
+		}
 	}
-
-	private String getMessage(String msgName) {
-		if (msgName.equalsIgnoreCase("broadcastMessage")) {
-			return ChatColor.YELLOW + getPlayerToRankName() + ChatColor.YELLOW
-					+ " is now a " + getGroup();
+	
+	public void isValidWorld(String worldName) throws CommandException {
+	    if(this.plugin.getServer().getWorld(worldName) == null){
+	    	throw new CommandException("That is not a valid world!");
+	    }
+	  }
+	
+	public void hasPermissionForGroup() throws CommandException{
+		if (!playerSender.hasPermission("bpermsrank.rank." + data[1])){
+			throw new CommandException("You do not have permission to rank to " + data[1]);
 		}
-		if (msgName.equalsIgnoreCase("senderMessage")) {
-			return ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "You have changed to rank of " + getPlayerToRankName()
-					+ ChatColor.RED + " to " + getGroup();
+	  }
+	
+	private String getSenderName(){
+		if(playerSender != null){
+			return playerSender.getDisplayName();
 		}
-		if (msgName.equalsIgnoreCase("rankedMessage")) {
-			return ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "Your rank has been changed to " + getGroup() + " by "
-					+ getSenderName();
-		}
-
-		return "";
-	}
-
-	private String getMessageWorld(String msgName) {
-		if (msgName.equalsIgnoreCase("senderMessage")) {
-			return ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "You have changed to rank of " + getPlayerToRankName()
-					+ ChatColor.RED + " to " + getGroup() + " in the world: "
-					+ getWorldName();
-		}
-		if (msgName.equalsIgnoreCase("rankedMessage")) {
-			return ChatColor.AQUA + "NOTICE: " + ChatColor.RED
-					+ "Your rank has been changed to " + getGroup() + " by "
-					+ getSenderName() + ChatColor.RED + " in the world: "
-					+ getWorldName();
-		}
-
-		return "";
-	}
-
-	private String getGroup() {
-		return this.data[1];
-	}
-
-	private String getSenderName() {
-		if (this.player == null) {
+		else{
 			return "Console";
 		}
-
-		return this.player.getDisplayName();
 	}
+	private String getPlayerGroups(String worldName, String playerName) throws CommandException {
+	    String[] groups = ApiLayer.getGroups(worldName, CalculableType.USER, playerName);
 
-	private String getPlayerToRankName() {
-		return this.playerToRank.getDisplayName();
+	    if (groups == null) {
+	      throw new CommandException("Player not found!");
+	    }
+
+	    StringBuffer temp = new StringBuffer();
+	    for (int i = 0; i < groups.length; i++) {
+	      temp.append(groups[i] + " ");
+	    }
+	    String results = temp.toString();
+
+	    return results;
+	  }
+	
+	private void displayHelp() {
+		cmdSender.sendMessage(ChatColor.RED + "--- bPermsRank Help ---");
+		cmdSender.sendMessage(ChatColor.YELLOW + "/rank player group [world]");
+		cmdSender.sendMessage(ChatColor.YELLOW + "/rankoffline player group [world]");
+		cmdSender.sendMessage(ChatColor.YELLOW + "/bpermsrank reload");
 	}
-
-	private String getWorldName() {
-		if (this.data.length == 3) {
-			return this.data[2];
+	
+	private void broadcast(boolean isAllWorlds, boolean isOnline){
+		if(plugin.isBroadcast()){
+			plugin.getServer().broadcastMessage(ChatColor.YELLOW + data[0] + ChatColor.YELLOW + " is now a " + data[1]);
 		}
-
-		return null;
-	}
-
-	private void displayHelp(CommandSender sender) {
-		sender.sendMessage(ChatColor.RED + "--- bPermsRank Help ---");
-		sender.sendMessage(ChatColor.YELLOW + "/rank player group");
-		sender.sendMessage(ChatColor.YELLOW + "/rank player group world");
-		sender.sendMessage(ChatColor.YELLOW + "/rankoffline player group");
-		sender.sendMessage(ChatColor.YELLOW + "/rankoffline player group world");
-		sender.sendMessage(ChatColor.YELLOW + "/bpermsrank reload");
-	}
-
-	private String getPlayerGroups(String worldName, String playerName)
-			throws CommandException {
-		String[] groups = ApiLayer.getGroups(worldName, CalculableType.USER,
-				playerName);
-
-		if (groups == null) {
-			throw new CommandException("Player not found!");
+		if(plugin.isNotifyRanked() && isOnline){
+			plugin.getServer().getPlayer(data[0]).sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "Your rank has been changed to " + data[1] + " by " + getSenderName());
 		}
-
-		StringBuffer temp = new StringBuffer();
-		for (int i = 0; i < groups.length; i++) {
-			temp.append(groups[i] + " ");
+		if(plugin.isNotifySender() && isAllWorlds){
+			cmdSender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "You have changed to rank of " + data[0] + ChatColor.RED + " to " + data[1]);
 		}
-		String results = temp.toString();
-
-		return results;
-	}
-
-	private void rankPlayerAllWorlds(String playerToRankName, String group) {
-		for (int i = 0; i < this.plugin.worlds.size(); i++) {
-			String worldName = (String) this.plugin.worlds.get(i);
-			ApiLayer.setGroup(worldName, CalculableType.USER, playerToRankName,
-					group);
+		if(plugin.isNotifySender() && !isAllWorlds){
+			cmdSender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "You have changed to rank of " + data[0] + ChatColor.RED + " to " + data[1]
+							  	   + ChatColor.RED + " in the world: " + data[2]);
 		}
 	}
-
-	private void rankPlayerInSingleWorld(String playerToRankName, String group,
-			String worldName) {
-		ApiLayer.setGroup(worldName, CalculableType.USER, playerToRankName,
-				group);
-	}
-
-	public void isValidWorld(String worldName) throws CommandException {
-		if (this.plugin.getServer().getWorld(worldName) == null)
-			throw new CommandException("That is not a valid world!");
-	}
-
-	public void isValidGroup(String group) throws CommandException {
-		if (this.plugin.groups.indexOf(group.toLowerCase()) == -1)
-			throw new CommandException("That group/rank does not exist!");
-	}
-
-	public void isValidPlayer(Player player) throws CommandException {
-		if ((player == null) || (!player.isOnline()))
-			throw new CommandException(
-					"That player is not online! Use: /rankoffline if you are sure you want to rank this player");
-	}
-
-	public void hasPermissionForGroup(Player player, String group)
-			throws CommandException {
-		if (!player.hasPermission("bpermsrank.rank." + group))
-			throw new CommandException("You do not have permission to rank to "
-					+ group);
-	}
-
-	public void hasPermissionForPlugin(Player player) {
-		if (!player.hasPermission("bpermsrank.rank"))
-			throw new CommandException(
-					"You do not have permission to use this command!");
-	}
+	
 }
