@@ -22,6 +22,9 @@ public class bPermsRank extends JavaPlugin {
 	private boolean broadcast;
 	private boolean notifyRanked;
 	private boolean notifySender;
+	private String broadcastMessage;
+	private String senderMessage;
+	private String rankedMessage;
 	private static final String VERSION = " v1.5";
 	private bPermsRankCommandExecutor cmdExecutor;
 
@@ -56,6 +59,9 @@ public class bPermsRank extends JavaPlugin {
 		broadcast = config.getBoolean("broadcast", true);
 		notifyRanked = config.getBoolean("notifyranked", true);
 		notifySender = config.getBoolean("notifysender", true);
+		broadcastMessage = config.getString("broadcastmessage");
+		rankedMessage = config.getString("rankedmessage");
+		senderMessage = config.getString("sendermessage");
 	}
 
 	public void saveYamls() {
@@ -114,6 +120,18 @@ public class bPermsRank extends JavaPlugin {
 	
 	public List<String> getWorlds(){
 		return worlds;
+	}
+	
+	public String getBroadcastMessage() {
+		return broadcastMessage;
+	}
+
+	public String getSenderMessage() {
+		return senderMessage;
+	}
+
+	public String getRankedMessage() {
+		return rankedMessage;
 	}
 
 	@Override

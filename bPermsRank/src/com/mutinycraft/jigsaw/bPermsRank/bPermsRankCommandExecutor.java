@@ -128,10 +128,8 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 	
 	private boolean commandRankInfo() {
 		try{
-			if(playerSender != null){
-				if(!playerSender.hasPermission("bpermsrank.rankinfo")){
+			if(playerSender != null && !playerSender.hasPermission("bpermsrank.rankinfo")){
 					throw new CommandException("You may not use this command!");
-				}
 			}
 			if(data.length != 2){
 				throw new CommandException("Usage: /rankinfo name world");
@@ -192,17 +190,16 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 		}
 	}
 	private String getPlayerGroups(String worldName, String playerName) throws CommandException {
-	    String[] groups = ApiLayer.getGroups(worldName, CalculableType.USER, playerName);
-
-	    if (groups == null) {
-	      throw new CommandException("Player not found!");
-	    }
-
-	    StringBuffer temp = new StringBuffer();
+	    
+		String[] groups = ApiLayer.getGroups(worldName, CalculableType.USER, playerName);
+	    StringBuffer buffer = new StringBuffer();
+	    
+	    
 	    for (int i = 0; i < groups.length; i++) {
-	      temp.append(groups[i] + " ");
+	    	buffer.append(groups[i] + " ");
 	    }
-	    String results = temp.toString();
+	    
+	    String results = buffer.toString();
 
 	    return results;
 	  }
@@ -216,18 +213,63 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 	
 	private void broadcast(boolean isAllWorlds, boolean isOnline){
 		if(plugin.isBroadcast()){
-			plugin.getServer().broadcastMessage(ChatColor.YELLOW + data[0] + ChatColor.YELLOW + " is now a " + data[1]);
+			plugin.getServer().broadcastMessage(getMessage("broadcast"));
 		}
 		if(plugin.isNotifyRanked() && isOnline){
-			plugin.getServer().getPlayer(data[0]).sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "Your rank has been changed to " + data[1] + " by " + getSenderName());
+			plugin.getServer().getPlayer(data[0]).sendMessage(getMessage("rankedmessage"));
 		}
 		if(plugin.isNotifySender() && isAllWorlds){
-			cmdSender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "You have changed to rank of " + data[0] + ChatColor.RED + " to " + data[1]);
+			cmdSender.sendMessage(getMessage("sendermessage"));
 		}
-		if(plugin.isNotifySender() && !isAllWorlds){
+		else if(plugin.isNotifySender()){
 			cmdSender.sendMessage(ChatColor.AQUA + "NOTICE: " + ChatColor.RED + "You have changed to rank of " + data[0] + ChatColor.RED + " to " + data[1]
 							  	   + ChatColor.RED + " in the world: " + data[2]);
 		}
+	}
+	
+	private String getMessage(String msgName){
+		if(msgName.equalsIgnoreCase("broadcast")){
+			StringBuffer msg = new StringBuffer(plugin.getBroadcastMessage());
+			msg = replaceTags(msg);
+			return ChatColor.translateAlternateColorCodes('&', msg.toString());
+		}
+		else if(msgName.equalsIgnoreCase("rankedmessage")){
+			StringBuffer msg = new StringBuffer(plugin.getRankedMessage());
+			msg = replaceTags(msg);
+			return ChatColor.translateAlternateColorCodes('&', msg.toString());
+		}
+		else if(msgName.equalsIgnoreCase("sendermessage")){
+			StringBuffer msg = new StringBuffer(plugin.getSenderMessage());
+			msg = replaceTags(msg);
+			return ChatColor.translateAlternateColorCodes('&', msg.toString() );
+		}
+		return null;
+	}
+
+	private StringBuffer replaceTags(StringBuffer msg) {
+		String groupTag = "{GROUP}";
+		String rankedTag = "{RANKED}";
+		String senderTag = "{SENDER}";
+	    String group =  data[1];
+	    String ranked = data[0];
+	    String sender = getSenderName();
+	    
+	    int position = msg.lastIndexOf(groupTag);
+	    if(position != -1){
+	    	msg.replace(position, position + groupTag.length(), group);
+	    }
+	    
+	    position = msg.lastIndexOf(rankedTag);
+		    if(position != -1){
+		    msg.replace(position, position + rankedTag.length(), ranked);
+	    }
+	    
+		position = msg.lastIndexOf(senderTag);
+	    if(position != -1){
+		    msg.replace(position, position + senderTag.length(), sender);
+	    }
+	    
+		return msg;
 	}
 	
 }
