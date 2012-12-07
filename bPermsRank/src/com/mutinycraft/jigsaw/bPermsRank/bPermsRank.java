@@ -25,7 +25,7 @@ public class bPermsRank extends JavaPlugin {
 	private String broadcastMessage;
 	private String senderMessage;
 	private String rankedMessage;
-	private static final String VERSION = " v1.5";
+	private static final String VERSION = " v1.9";
 	private bPermsRankCommandExecutor cmdExecutor;
 
 	public void onEnable() {
@@ -59,9 +59,9 @@ public class bPermsRank extends JavaPlugin {
 		broadcast = config.getBoolean("broadcast", true);
 		notifyRanked = config.getBoolean("notifyranked", true);
 		notifySender = config.getBoolean("notifysender", true);
-		broadcastMessage = config.getString("broadcastmessage");
-		rankedMessage = config.getString("rankedmessage");
-		senderMessage = config.getString("sendermessage");
+		broadcastMessage = config.getString("broadcastmessage", "&e{RANKED} is now a {GROUP}");
+		rankedMessage = config.getString("rankedmessage", "&bNOTICE: &cYour rank has been changed to {GROUP} by {SENDER}");
+		senderMessage = config.getString("sendermessage", "&bNOTICE: &cYou have changed the rank of {RANKED} to {GROUP}");
 	}
 
 	public void saveYamls() {

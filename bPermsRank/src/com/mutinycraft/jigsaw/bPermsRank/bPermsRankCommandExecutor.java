@@ -78,6 +78,9 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 			isValidGroup();
 			playerToRank = plugin.getServer().getPlayerExact(data[0]);
 			isValidPlayer();
+			if(playerToRank.hasPermission("bpermsrank.norank")){
+				throw new CommandException("You may not change the rank of this player!");
+			}
 			if(playerSender != null){
 				hasPermissionForGroup();
 			}
@@ -189,6 +192,7 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 			return "Console";
 		}
 	}
+	
 	private String getPlayerGroups(String worldName, String playerName) throws CommandException {
 	    
 		String[] groups = ApiLayer.getGroups(worldName, CalculableType.USER, playerName);
@@ -212,10 +216,10 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 	}
 	
 	private void broadcast(boolean isAllWorlds, boolean isOnline){
-		if(plugin.isBroadcast()){
+		if(plugin.isBroadcast() && isAllWorlds){
 			plugin.getServer().broadcastMessage(getMessage("broadcast"));
 		}
-		if(plugin.isNotifyRanked() && isOnline){
+		if(plugin.isNotifyRanked() && isOnline && isAllWorlds){
 			plugin.getServer().getPlayer(data[0]).sendMessage(getMessage("rankedmessage"));
 		}
 		if(plugin.isNotifySender() && isAllWorlds){
@@ -255,17 +259,20 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 	    String sender = getSenderName();
 	    
 	    int position = msg.lastIndexOf(groupTag);
+	    
 	    if(position != -1){
 	    	msg.replace(position, position + groupTag.length(), group);
 	    }
 	    
 	    position = msg.lastIndexOf(rankedTag);
-		    if(position != -1){
+		
+	    if(position != -1){
 		    msg.replace(position, position + rankedTag.length(), ranked);
 	    }
 	    
 		position = msg.lastIndexOf(senderTag);
-	    if(position != -1){
+	    
+		if(position != -1){
 		    msg.replace(position, position + senderTag.length(), sender);
 	    }
 	    
