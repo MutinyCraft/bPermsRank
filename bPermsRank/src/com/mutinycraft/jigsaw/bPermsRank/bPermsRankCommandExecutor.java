@@ -161,7 +161,10 @@ public class bPermsRankCommandExecutor implements CommandExecutor{
 	}
 
 	public void isValidPlayer() throws CommandException{
-		if((playerToRank == null) || (!playerToRank.isOnline())){
+		if(playerToRank == null){
+			throw new CommandException("That player does not exist.");
+		}
+		else if(!playerToRank.isOnline()){
 			throw new CommandException("That player is not online! Use: /rankoffline if you are sure you want to rank this player.");
 		}
 	}
